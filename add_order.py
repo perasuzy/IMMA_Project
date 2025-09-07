@@ -4,6 +4,7 @@ from tkinter import messagebox
 from utils import add_new_order, calculate_order
 import json, uuid, pulp
 from datetime import datetime
+from utils import *
 
 def open_add_order_window(root):
     add_window = tk.Toplevel(root)
@@ -50,54 +51,3 @@ def open_add_order_window(root):
         )
 
     tk.Button(add_window, text="Submit", command=submit_action).pack(pady=10)
-
-def read_data():
-    try:
-        with open("orders.json", "r", encoding="utf-8") as file:
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-def write_data(records):
-    with open("orders.json", "w", encoding="utf-8") as file:
-        json.dump(records, file, indent=4, ensure_ascii=False)
-
-def add_new_order(date, buyer, supplier, sofa, table, chair, add_window):
-    records = read_data()
-    new_entry = {
-        "ID": str(uuid.uuid4()),
-        "IDCalculate": "",
-        "Date": date,
-        "Buyer": buyer,
-        "Supplier": supplier,
-        "Sofa": sofa,
-        "Table": table,
-        "Chair": chair,
-        "Status": "Inprogress",
-        "TimeStamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    records.append(new_entry)
-    write_data(records)
-    messagebox.showinfo("Submission", "Form Submitted Successfully and saved to orders.json!")
-    add_window.destroy()
-
-def submit_orders():
-    data = read_data()
-    results = [rec for rec in data if rec.get("Status") == "Inprogress"]
-
-    orders = [0, 0, 0]   # Sofa, Table, Chair
-    for result in results:
-        orders[0] += int(result["Sofa"])
-        orders[1] += int(result["Table"])
-        orders[2] += int(result["Chair"])
-
-    total_wood_for_use = calculate_order(orders)
-    time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    IDCalculate = time.replace("-", "").replace(" ", "").replace(":", "")
-
-    for rec in results:
-        rec["Status"] = "Done"
-        rec["IDCalculate"] = IDCalculate  # <-- string
-        rec["TimeStamp"] = time
-    write_data(data)
-    return total_wood_for_use
